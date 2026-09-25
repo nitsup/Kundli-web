@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kundli-Web
 
-## Getting Started
+Kundli-Web is an architecture-first foundation for a future astrology, Panchang, Pandit workflow, and admin platform. The repository intentionally implements the core platform contracts without calculating astrology results or building finished business features.
 
-First, run the development server:
+## Current status
+
+Implemented:
+
+- Next.js App Router with route groups for public, auth, dashboard, pandit, and admin flows
+- TypeScript, Tailwind, and UI primitives
+- Supabase SSR client/server foundation
+- Validation, timezone, logging, and error abstractions
+- Domain model and database migration skeleton with RLS-oriented design
+- Documentation and tests for the initial foundation contracts
+
+Deferred:
+
+- actual astrology calculations
+- Panchang calculation engine
+- matching engine
+- AI provider integration
+- payment system
+- PDF/report rendering
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+The public Supabase variables are defined in `.env.example`. Secret or provider-specific values are intentionally reserved for server-only configuration and must be added manually by the developer in a local environment.
 
-To learn more about Next.js, take a look at the following resources:
+## Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See the `docs/` folder for architecture, domain modeling, security, and astrology-engine abstraction notes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Supabase and security
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project uses Supabase Auth plus server-side SSR session handling. Database access is intentionally designed around ownership and role-based constraints, with RLS policies conceptually documented in `docs/security.md` and the migration in `supabase/migrations/001_foundation_schema.sql`.

@@ -15,7 +15,7 @@ create table if not exists public.profiles (
 
 create table if not exists public.birth_profiles (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references public.profiles(id) on delete cascade,
+  owner_id uuid references public.profiles(id) on delete cascade,
   name text not null,
   date_of_birth date not null,
   time_of_birth time not null,
@@ -46,6 +46,16 @@ create table if not exists public.clients (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.birth_profiles
+  add column if not exists client_id uuid references public.clients(id) on delete cascade;
+
+alter table public.birth_profiles
+  drop constraint if exists birth_profiles_owner_or_client_check;
+
+alter table public.birth_profiles
+  add constraint birth_profiles_owner_or_client_check
+  check ((owner_id is not null) <> (client_id is not null));
 
 create table if not exists public.reports (
   id uuid primary key default gen_random_uuid(),
@@ -90,52 +100,100 @@ alter table public.reports enable row level security;
 alter table public.ai_usage enable row level security;
 alter table public.audit_logs enable row level security;
 
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+set row_security = off
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$;
+
+create or replace function public.prevent_profile_role_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.role is distinct from old.role and not public.is_admin() then
+    raise exception 'profile role changes require administrative access';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger profiles_prevent_role_change
+before update on public.profiles
+for each row execute function public.prevent_profile_role_change();
+
 create policy "Profiles are viewable by owner or admin" on public.profiles
-for select using (
-  auth.uid() = id or exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+for select using (auth.uid() = id or public.is_admin());
 
 create policy "Profiles are editable by owner or admin" on public.profiles
-for update using (
-  auth.uid() = id or exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+for update using (auth.uid() = id or public.is_admin());
 
 create policy "Birth profiles are viewable by owner" on public.birth_profiles
-for select using (auth.uid() = owner_id);
+for select using (
+  auth.uid() = owner_id or exists (
+    select 1 from public.clients c
+    join public.pandits p on p.id = c.pandit_id
+    where c.id = client_id and p.id = auth.uid()
+  ) or public.is_admin()
+);
 
 create policy "Birth profiles are editable by owner" on public.birth_profiles
-for update using (auth.uid() = owner_id);
+for update using (
+  auth.uid() = owner_id or exists (
+    select 1 from public.clients c
+    join public.pandits p on p.id = c.pandit_id
+    where c.id = client_id and p.id = auth.uid()
+  ) or public.is_admin()
+);
 
 create policy "Birth profiles are insertable by owner" on public.birth_profiles
-for insert with check (auth.uid() = owner_id);
+for insert with check (
+  auth.uid() = owner_id or exists (
+    select 1 from public.clients c
+    join public.pandits p on p.id = c.pandit_id
+    where c.id = client_id and p.id = auth.uid()
+  ) or public.is_admin()
+);
 
 create policy "Pandit records are limited to their own profile or admin" on public.pandits
-for select using (
-  auth.uid() = id or exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+for select using (auth.uid() = id or public.is_admin());
 
 create policy "Clients are visible to their pandit or admin" on public.clients
 for select using (
   exists (
     select 1 from public.pandits p where p.id = auth.uid() and p.id = pandit_id
-  ) or exists (
-    select 1 from public.profiles pp where pp.id = auth.uid() and pp.role = 'admin'
-  )
+  ) or public.is_admin()
 );
 
 create policy "Clients are editable by their pandit or admin" on public.clients
 for update using (
   exists (
     select 1 from public.pandits p where p.id = auth.uid() and p.id = pandit_id
-  ) or exists (
-    select 1 from public.profiles pp where pp.id = auth.uid() and pp.role = 'admin'
-  )
+  ) or public.is_admin()
+);
+
+create policy "Clients are insertable by their pandit or admin" on public.clients
+for insert with check (
+  exists (
+    select 1 from public.pandits p where p.id = auth.uid() and p.id = pandit_id
+  ) or public.is_admin()
+);
+
+create policy "Clients are deletable by their pandit or admin" on public.clients
+for delete using (
+  exists (
+    select 1 from public.pandits p where p.id = auth.uid() and p.id = pandit_id
+  ) or public.is_admin()
 );
 
 create policy "Reports are scoped to owner and pandit-client chain" on public.reports
@@ -144,21 +202,15 @@ for select using (
     select 1 from public.clients c
     join public.pandits p on p.id = c.pandit_id
     where c.id = related_client_id and p.id = auth.uid()
-  ) or exists (
-    select 1 from public.profiles pp where pp.id = auth.uid() and pp.role = 'admin'
-  )
+  ) or public.is_admin()
 );
 
 create policy "AI usage is visible only to owner or admin" on public.ai_usage
 for select using (
-  auth.uid() = owner_id or exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-  )
+  auth.uid() = owner_id or public.is_admin()
 );
 
 create policy "Audit log access is admin-only" on public.audit_logs
 for select using (
-  exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-  )
+  public.is_admin()
 );

@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+import { requireAuthenticatedUser } from '@/lib/supabase/auth';
+
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  await requireAuthenticatedUser();
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-6 border-b border-slate-200 pb-4">

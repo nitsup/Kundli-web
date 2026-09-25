@@ -20,7 +20,8 @@ export interface Profile {
 
 export interface BirthProfile {
   id: string;
-  owner_id: string;
+  owner_id?: string;
+  client_id?: string;
   name: string;
   date_of_birth: string;
   time_of_birth: string;

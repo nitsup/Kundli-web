@@ -7,6 +7,7 @@ A platform-level identity associated with Supabase auth.users. Each profile cont
 
 ### Birth profile
 Reusable and sensitive birth details used as an input to astrology and Panchang calculations. This data must be access-controlled and not exposed broadly.
+An authenticated user's birth profile is owned through `owner_id`; a Pandit-managed client's birth profile is owned through `client_id`. Exactly one ownership path is required.
 
 ### Pandit
 Pandit-specific configuration and business relationship metadata. It does not duplicate user authentication data.
