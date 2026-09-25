@@ -12,6 +12,7 @@ Implemented:
 - Validation, timezone, logging, and error abstractions
 - Domain model and database migration skeleton with RLS-oriented design
 - Documentation and tests for the initial foundation contracts
+- Phase 3 domain contracts, validation, Kundli/Pandit route shells, presentation states, and methodology structure
 
 Deferred:
 
@@ -21,6 +22,7 @@ Deferred:
 - AI provider integration
 - payment system
 - PDF/report rendering
+- chart, dasha, yoga, dosha, transit, matching, and AI calculations (intentionally unavailable)
 
 ## Setup
 

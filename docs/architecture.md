@@ -27,6 +27,17 @@ Kundli-Web is intentionally structured as a domain-first foundation for a seriou
    - AI model provider
    - payment provider
 
+## Phase 3 product foundation
+
+The `/kundli` workspace now exposes navigation and honest route shells for chart,
+planet, house, nakshatra, dasha, yoga, dosha, interpretation, timeline, reports,
+sharing, and assistant boundaries. `lib/domain/types.ts` defines the contracts and
+`lib/validation/schemas.ts` validates inputs at the boundary. The UI deliberately
+uses unavailable and empty states until a verified calculation provider is connected;
+it never invents astrology results. `/pandit/clients`, `/pandit/consultations`,
+`/pandit/reports`, and `/pandit/settings` provide the corresponding role-gated
+navigation targets. Educational content starts at `/learn` and `/methodology`.
+
 ## Design goals
 
 - no fake calculations and no placeholder data disguised as production output
