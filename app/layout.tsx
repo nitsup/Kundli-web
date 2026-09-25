@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-  default: 'Kundli',
+    default: 'Kundli',
     template: '%s | Kundli-Web',
   },
   description:
     'A thoughtful home for Indian astrology, calendars, and timeless wisdom.',
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

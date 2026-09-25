@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { getSafeRelativeRedirect } from '@/lib/security/redirects';
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
@@ -37,7 +38,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         const next = new URLSearchParams(window.location.search).get('next');
-        const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+        const safeNext = getSafeRelativeRedirect(next);
         router.replace(safeNext);
         router.refresh();
         return;
@@ -101,7 +102,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               {message.text}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={pending}>{pending ? 'Please wait…' : content.submit}</Button>
+          <Button type="submit" className="w-full" loading={pending}>{content.submit}</Button>
         </form>
         {mode === 'login' ? (
           <div className="mt-4 flex justify-between text-sm">

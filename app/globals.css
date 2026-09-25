@@ -2,10 +2,18 @@
 
 :root {
   --ivory: #fffaf0;
+  --surface: #ffffff;
+  --surface-warm: #fff5e1;
+  --surface-highlight: #fff0d2;
   --ink: #3c1f1a;
+  --muted: #795548;
+  --muted-strong: #6b4038;
   --deep-red: #7f1d1d;
+  --deep-red-hover: #991b1b;
   --saffron: #ea580c;
+  --border: #f1d7a6;
   --gold: #c9962d;
+  --highlight: #ffd166;
 }
 
 @theme inline {
@@ -20,9 +28,10 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--ivory);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
-::selection { background: #fed7aa; color: #7f1d1d; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+::selection { background: #fed7aa; color: var(--deep-red); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
