@@ -2,8 +2,10 @@ import Link from 'next/link';
 
 import { KundliShell } from '@/components/kundli/shell';
 import { UnavailableState } from '@/components/kundli/states';
+import { requireAuthenticatedUser } from '@/lib/supabase/auth';
 
-export default function CreateKundliPage() {
+export default async function CreateKundliPage() {
+  await requireAuthenticatedUser();
   return (
     <KundliShell title="Create a Kundli">
       <div className="space-y-5">

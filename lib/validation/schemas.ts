@@ -66,6 +66,38 @@ export const locationSchema = z.object({
   locationSource: z.enum(['user', 'geocoding', 'unknown']).optional(),
 });
 
+export const calculationConfigurationSchema = z.object({
+  chartSystem: z.enum(['vedic', 'western', 'unknown']),
+  ayanamsa: z.string().min(1).max(80).optional(),
+  houseSystem: z.string().min(1).max(80).optional(),
+  divisionalCharts: z.array(z.enum(['d1', 'd7', 'd9', 'd10', 'd12', 'custom'])).max(20).optional(),
+}).strict();
+
+export const calculationVersionSchema = z.object({
+  engine: z.string().min(1).max(120),
+  engineVersion: z.string().min(1).max(120),
+  provider: z.string().min(1).max(120).optional(),
+  providerVersion: z.string().min(1).max(120).optional(),
+  ephemerisVersion: z.string().min(1).max(120).optional(),
+  methodologyVersion: z.string().min(1).max(120).optional(),
+}).strict();
+
+export const calculationInputSchema = z.object({
+  birthProfileId: z.string().min(1),
+  name: z.string().min(1).max(120),
+  dateOfBirth: z.string().refine((value) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }, 'dateOfBirth must be a valid ISO date'),
+  timeOfBirth: z.string().refine((value) => /^(\d{2}):(\d{2})(?::(\d{2}))?$/.test(value) && (() => {
+    const [, hours, minutes, seconds] = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value)!;
+    return Number(hours) < 24 && Number(minutes) < 60 && (!seconds || Number(seconds) < 60);
+  })(), 'timeOfBirth must be a valid 24-hour time'),
+  timeAccuracy: z.enum(['exact', 'approximate', 'unknown']),
+  location: locationSchema,
+}).strict();
+
 const planetSchema = z.enum(['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn', 'rahu', 'ketu']);
 const degreePositionSchema = z.object({
   degrees: z.number().min(0).lt(30),
@@ -112,6 +144,16 @@ export const birthChartSchema = z.object({
   ascendant: z.string().optional(),
   nakshatra: z.object({ name: z.string().min(1), pada: z.number().int().min(1).max(4).optional(), ruler: planetSchema.optional(), longitude: z.number().min(0).lt(360).optional() }).optional(),
   status: z.enum(['available', 'unavailable', 'pending', 'error']),
+});
+export const calculationResultSchema = z.object({
+  id: z.string().min(1),
+  birthProfileId: z.string().min(1),
+  input: calculationInputSchema,
+  configuration: calculationConfigurationSchema,
+  version: calculationVersionSchema,
+  charts: z.array(birthChartSchema),
+  status: z.enum(['available', 'unavailable', 'pending', 'error']),
+  createdAt: z.string().datetime(),
 });
 export const dashaPeriodSchema = z.object({
   id: z.string().min(1),
