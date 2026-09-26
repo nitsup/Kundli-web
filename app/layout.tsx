@@ -3,6 +3,11 @@ import { Geist, Geist_Mono } from 'next/font/google';
 
 import './globals.css';
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined);
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -20,7 +25,7 @@ export const metadata: Metadata = {
   },
   description:
     'A thoughtful home for Indian astrology, calendars, and timeless wisdom.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
