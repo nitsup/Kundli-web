@@ -2,6 +2,18 @@
 
 Kundli-Web is an architecture-first foundation for a future astrology, Panchang, Pandit workflow, and admin platform. The repository intentionally implements the core platform contracts without calculating astrology results or building finished business features.
 
+## License
+
+Kundli-Web is licensed under the GNU Affero General Public License, version 3
+(AGPL-3.0-only); see [LICENSE](./LICENSE).
+
+The project intends to use the AGPL-licensed Swiss Ephemeris Free Edition as
+its astronomical provider, subject to final review before public distribution
+or service activation. Swiss Ephemeris has **not yet been integrated**: no
+Swiss Ephemeris package, source, or ephemeris data is included in the
+application at this stage. Integration is planned for a later development
+step.
+
 ## Current status
 
 Implemented:

@@ -50,6 +50,21 @@ describe('foundation contracts', () => {
     expect(result.success).toBe(false);
   });
 
+  it('requires an explicit timezone on birth profiles', () => {
+    const result = birthProfileSchema.safeParse({
+      id: 'birth_123',
+      owner_id: 'user_123',
+      name: 'Aditi Birth Profile',
+      date_of_birth: '1995-06-15',
+      time_of_birth: '18:30',
+      birth_time_accuracy: 'exact',
+      latitude: 19.076,
+      longitude: 72.8777,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('requires one valid birth-profile owner', () => {
     const withoutOwner = birthProfileSchema.safeParse({
       id: 'birth_789',

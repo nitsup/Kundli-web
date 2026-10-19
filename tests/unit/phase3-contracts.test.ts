@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { birthChartSchema, calculationInputSchema, calculationResultSchema, dashaPeriodSchema, reportRequestSchema } from '../../lib/validation/schemas';
+import { createCalculationInput } from '../../lib/astrology/calculation-input';
+
+const calculationConfiguration = {
+  chartSystem: 'vedic' as const,
+  zodiacSystem: 'sidereal' as const,
+  ayanamsa: 'lahiri' as const,
+  nodeType: 'true' as const,
+  houseSystem: 'whole_sign' as const,
+  calculationFlags: ['swiss_ephemeris', 'speed'] as const,
+  methodologyVersion: 'kundli-vedic-core-v1' as const,
+};
 
 describe('phase 3 domain contracts', () => {
   it('rejects unverified chart data rather than accepting malformed positions', () => {
@@ -13,7 +24,7 @@ describe('phase 3 domain contracts', () => {
     expect(dashaPeriodSchema.safeParse({ id: 'period', system: 'vimshottari', lord: 'moon', startsAt: 'not-a-date', endsAt: '2030-01-01T00:00:00Z', level: 1, status: 'pending' }).success).toBe(false);
   });
   it('validates calculation inputs and preserves version metadata at the result boundary', () => {
-    const input = {
+    const input = createCalculationInput({
       birthProfileId: 'profile',
       name: 'Example',
       dateOfBirth: '1990-01-02',
@@ -25,20 +36,67 @@ describe('phase 3 domain contracts', () => {
         latitude: 28.6,
         longitude: 77.2,
         timezone: 'Asia/Kolkata',
+        timezoneSource: 'user',
+        locationSource: 'user',
       },
-    };
+    });
     expect(calculationInputSchema.safeParse(input).success).toBe(true);
     expect(calculationInputSchema.safeParse({ ...input, dateOfBirth: '1990-02-30' }).success).toBe(false);
+    expect(calculationInputSchema.safeParse({ ...input, dateOfBirth: '0000-01-01' }).success).toBe(false);
+    expect(calculationInputSchema.safeParse({
+      ...input,
+      birthDateTimeUtc: '1990-01-02T06:59:00.000Z',
+    }).success).toBe(false);
+    expect(calculationInputSchema.safeParse({
+      ...input,
+      location: { ...input.location, timezone: undefined },
+    }).success).toBe(false);
+    expect(calculationInputSchema.safeParse({
+      ...input,
+      timezoneDatabaseVersion: 'older-tzdb',
+    }).success).toBe(true);
+    expect(calculationInputSchema.safeParse({
+      ...input,
+      timezoneDatabaseVersion: 'older-tzdb',
+      timezoneOffset: '+99:99',
+    }).success).toBe(false);
+    expect(input.location.latitude).toBe(28.6);
+    expect(input.location.longitude).toBe(77.2);
     expect(calculationInputSchema.safeParse({ ...input, unexpected: true }).success).toBe(false);
     expect(calculationResultSchema.safeParse({
       id: 'result',
       birthProfileId: 'profile',
       input,
-      configuration: { chartSystem: 'vedic' },
-      version: { engine: 'test', engineVersion: '0.0.0' },
+      configuration: calculationConfiguration,
+      version: {
+        engine: 'test',
+        engineVersion: '0.0.0',
+        methodologyVersion: calculationConfiguration.methodologyVersion,
+      },
       charts: [],
       status: 'pending',
       createdAt: '2026-01-01T00:00:00.000Z',
     }).success).toBe(true);
+  });
+
+  it('stores the normalized form of an unambiguous legacy timezone identifier', () => {
+    const input = createCalculationInput({
+      birthProfileId: 'profile',
+      name: 'Example',
+      dateOfBirth: '1990-01-02',
+      timeOfBirth: '12:30',
+      timeAccuracy: 'exact',
+      location: {
+        country: 'India',
+        city: 'Kolkata',
+        latitude: 22.5726,
+        longitude: 88.3639,
+        timezone: 'Asia/Calcutta',
+        timezoneSource: 'user',
+        locationSource: 'user',
+      },
+    });
+
+    expect(input.location.timezone).toBe('Asia/Kolkata');
   });
 });
